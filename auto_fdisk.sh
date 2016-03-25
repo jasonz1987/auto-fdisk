@@ -8,6 +8,9 @@
 # which disk shoule be parted
 disk=/dev/vdc
 
+# disk type
+fstype=ext4
+
 # partition num
 num=3
 
@@ -31,8 +34,7 @@ fi
 # get
 disk_size=$(fdisk -s ${disk})
 
-umount ${disk}
-
+umount ${disk}*
 
 fdisk_fun()
 {
@@ -46,29 +48,30 @@ wq
 EOF
 
 sleep 5
-mkfs.ext3 ${disk}${1}
+mkfs -t ${fstype} ${disk}${1}
 }
 
 temp=0
+
 for((i=0;i<${num};i++));do
 	if [ ${i} -lt ${num} ] ;then
 		cyfinder=$(echo ${sizes[${i}]}*${disk_size}/512 | bc)
 		fdisk_fun $(( ${i} + 1 )) $(( ${cyfinder} + $temp ))
-		let ${temp}+=${cyfinder}
+		let temp+=${cyfinder}
 	else 
 		fdisk_fun ${i} 
 	fi
 done
 
 
-for f in ${folders};do
+for f in ${folders[@]};do
 	if [ ! -d ${f} ];then
 		mkdir -p ${f}
 	fi
 done
 
 for((i=0;i<${num};i++));do
-	echo "${disk}$(( $i + 1 ))  ${folders[${i}]}  ext3    defaults    0  0" >> /etc/fstab
+	echo "${disk}$(( $i + 1 ))  ${folders[${i}]}  ${fstype}    defaults    0  0" >> /etc/fstab
 done
 
 
